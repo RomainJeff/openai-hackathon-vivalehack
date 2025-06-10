@@ -1,7 +1,7 @@
 import { Agent, run, RunContext, tool } from '@openai/agents';
 import { z } from 'zod';
 import { NextResponse } from 'next/server';
-import { getTicketById } from '@/services/ticketService';
+import { getTicketById, saveTicket } from '@/services/ticketService';
 import { Ticket, TicketStatus } from '@/types/ticket';
 
 const generateAnswerTool = tool({
@@ -11,7 +11,10 @@ const generateAnswerTool = tool({
     answers: z.array(z.string()).describe('The answers to the customer query.'),
   }),
   execute: async (answers, runContext?: RunContext<Ticket>) => {
-    // TODO: Update the ticket with the answers
+    const ticket = runContext?.context as Ticket;
+    ticket.status = TicketStatus.PICKED_UP_BY_AGENT;
+    saveTicket(ticket);
+
     return answers;
   },
 });
@@ -29,10 +32,14 @@ const answerToCustomerTool = tool({
   parameters: z.object({}),
   needsApproval: async (_context) => {
     const ticket = _context.context as Ticket;
-    return ticket.status === TicketStatus.AGENT_WAITING_FOR_HUMAN;
+    return ticket.status === TicketStatus.PICKED_UP_BY_AGENT;
   },
   execute: async (_args, runContext?: RunContext<Ticket>) => {
-    return 'Answer to customer';
+    const ticket = runContext?.context as Ticket;
+    ticket.status = TicketStatus.ANSWERED;
+    saveTicket(ticket);
+
+    return 'Customer answered';
   }
 });
 
@@ -46,9 +53,9 @@ const answerToCustomerAgent = new Agent<Ticket>({
 const orchestratorAgent = Agent.create({
   name: 'Orchestrator agent',
   instructions: [
-    'You are the orchestrator agent. You will be given a ticket with a customer query.',
-    'First, you will hand off to the generate answer agent to generate a list of answers.',
-    'Then, you will hand off to the answer to customer agent to answer the customer query.',
+    'You are the orchestrator agent. You will be given a ticket with a customer query and a ticket status.',
+    'If the ticket status is waiting_for_pickup, you will hand off to the generate answer agent to generate a list of answers, then hand off to the answer to customer agent to answer the customer query.',
+    'If the ticket status is picked_up_by_agent, you will hand off to the answer to customer agent to answer the customer query.',
   ].join('\n'),
   handoffs: [generateAnswerAgent, answerToCustomerAgent],
 });
@@ -87,9 +94,13 @@ async function handleCustomerSupport(ticket: Ticket) {
 
   const result = await run(
     orchestratorAgent,
-    `Here is the customer query: "${ticket.content}"`,
+    `Here is the customer query: "${ticket.content}", the ticket status is ${ticket.status}`,
     { context: ticket },
   );
+
+  ticket.agentState = JSON.stringify(result.state);
+  ticket.status = TicketStatus.AGENT_WAITING_FOR_HUMAN;
+  saveTicket(ticket);
 
   return result.finalOutput;
 }
