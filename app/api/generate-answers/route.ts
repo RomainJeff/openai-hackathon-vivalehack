@@ -16,11 +16,41 @@ const generateAnswerTool = tool({
   },
 });
 
-const supportAgent = new Agent<Ticket>({
-  name: 'Customer Support Agent',
+const generateAnswerAgent = new Agent<Ticket>({
+  name: 'Generate Answer Agent',
   instructions: 'You are a helpful customer support agent.',
   tools: [generateAnswerTool],
   modelSettings: { toolChoice: 'generateAnswer' },
+});
+
+const answerToCustomerTool = tool({
+  name: 'answerToCustomer',
+  description: 'Use this tool to answer the customer.',
+  parameters: z.object({}),
+  needsApproval: async (_context) => {
+    const ticket = _context.context as Ticket;
+    return ticket.status === TicketStatus.AGENT_WAITING_FOR_HUMAN;
+  },
+  execute: async (_args, runContext?: RunContext<Ticket>) => {
+    return 'Answer to customer';
+  }
+});
+
+const answerToCustomerAgent = new Agent<Ticket>({
+  name: 'Answer to Customer Agent',
+  instructions: 'You are a helpful customer support agent.',
+  tools: [answerToCustomerTool],
+  modelSettings: { toolChoice: 'answerToCustomer' },
+});
+
+const orchestratorAgent = Agent.create({
+  name: 'Orchestrator agent',
+  instructions: [
+    'You are the orchestrator agent. You will be given a ticket with a customer query.',
+    'First, you will hand off to the generate answer agent to generate a list of answers.',
+    'Then, you will hand off to the answer to customer agent to answer the customer query.',
+  ].join('\n'),
+  handoffs: [generateAnswerAgent, answerToCustomerAgent],
 });
 
 export async function POST(request: Request) {
@@ -56,7 +86,7 @@ async function handleCustomerSupport(ticket: Ticket) {
   console.log('Processing ticket:', ticket.id);
 
   const result = await run(
-    supportAgent,
+    orchestratorAgent,
     `Here is the customer query: "${ticket.content}"`,
     { context: ticket },
   );
