@@ -93,10 +93,10 @@ export async function POST(request: Request) {
       await handleCustomerSupportTicket(ticket);
       return NextResponse.json({ message: 'Customer support ticket processeded, waiting for human intervention' });
     } else if (ticket.status === TicketStatus.HUMAN_FEEDBACK_PROVIDED) {
-      await handleHumanIntervention(ticket);
-      return NextResponse.json({ message: 'Customer support ticket answered' });
+      const agent = await handleHumanIntervention(ticket);
+      return NextResponse.json({ agent });
     } else {
-      return NextResponse.json(ticket);
+      return NextResponse.json({ error: 'Invalid ticket status' }, { status: 400 });
     }
   } catch (error) {
     console.error('Error handling customer support:', error);
@@ -117,9 +117,9 @@ async function handleHumanIntervention(ticket: Ticket) {
     state.approve(interruption);
   }
 
-  await run(customerSupportOrchestrator, state);
+  const result = await run(customerSupportOrchestrator, state);
 
-  return ticket;
+  return result.lastAgent?.name;
 }
 
 async function handleCustomerSupportTicket(ticket: Ticket) {
