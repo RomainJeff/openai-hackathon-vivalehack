@@ -129,7 +129,7 @@ export default function TicketsPage() {
 
     initialLoad();
 
-    const intervalId = setInterval(poll, 10000);
+    const intervalId = setInterval(poll, 5000);
 
     return () => clearInterval(intervalId);
   }, []);
