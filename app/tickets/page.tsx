@@ -24,7 +24,7 @@ const getStatusChip = (status: TicketStatus) => {
     case TicketStatus.PICKED_UP_BY_AGENT:
       return <Chip label="Picked up by Agent" color="info" />;
     case TicketStatus.AGENT_WAITING_FOR_HUMAN:
-      return <Chip label="Waiting for Human" color="info" />;
+      return <Chip label="Waiting for Human" color="error" />;
     case TicketStatus.ANSWERED:
       return <Chip label="Answered" color="success" />;
     default:
@@ -105,9 +105,14 @@ export default function TicketsPage() {
           <Typography variant="h4" component="h1">
             Support Tickets
           </Typography>
-          <Button variant="contained" component={Link} href="/tickets/add">
-            New Ticket
-          </Button>
+          <Box>
+            <Button variant="contained" component={Link} href="/agents" sx={{ mr: 1}}>
+              Agents
+            </Button>
+            <Button variant="contained" component={Link} href="/tickets/add">
+              New Ticket
+            </Button>
+          </Box>
         </Box>
         {isLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>

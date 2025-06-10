@@ -14,7 +14,7 @@ import {
   CardContent,
 } from "@mui/material"
 import { Send, ContentCopy } from "@mui/icons-material"
-import { Ticket } from "@/types/ticket"
+import { Ticket, TicketStatus } from "@/types/ticket"
 
 interface AIResponseProposal {
   id: string
@@ -98,6 +98,21 @@ The Support Team`,
       "Casual, friendly tone that celebrates the upgrade while minimizing the problem. Quick resolution with personal touch and acknowledgment of their timeline.",
   },
 ]
+
+const getStatusChip = (status: TicketStatus) => {
+  switch (status) {
+    case TicketStatus.WAITING_FOR_PICKUP:
+      return <Chip label="Waiting for Agent" color="warning" />
+    case TicketStatus.PICKED_UP_BY_AGENT:
+      return <Chip label="Picked up by Agent" color="info" />
+    case TicketStatus.AGENT_WAITING_FOR_HUMAN:
+      return <Chip label="Waiting for Human" color="error" />
+    case TicketStatus.ANSWERED:
+      return <Chip label="Answered" color="success" />
+    default:
+      return <Chip label={status} />
+  }
+}
 
 export default function TicketPage() {
   const params = useParams<{ id: string }>()
@@ -188,12 +203,17 @@ export default function TicketPage() {
             bgcolor: "white",
           }}
         >
-          <Typography variant="h6" component="h2" gutterBottom>
-            {ticket.subject}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            From: {ticket.email} - Ticket ID: {params.id}
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box>
+              <Typography variant="h6" component="h2" gutterBottom>
+                {ticket.subject}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                From: {ticket.email} - Ticket ID: {params.id}
+              </Typography>
+            </Box>
+            {getStatusChip(ticket.status)}
+          </Box>
           <Typography variant="body1">{ticket.content}</Typography>
         </Box>
 
@@ -268,7 +288,7 @@ export default function TicketPage() {
                 Copy
               </Button>
               <Button variant="contained" color="primary" startIcon={<Send />}>
-                Send Response
+                Send to agent
               </Button>
             </Stack>
           </Box>
