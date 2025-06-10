@@ -11,6 +11,7 @@ import {
   Box,
   CircularProgress,
   Alert,
+  Button,
 } from "@mui/material";
 import Link from "next/link";
 import { Ticket, TicketStatus } from "@/types/ticket";
@@ -55,9 +56,21 @@ export default function TicketsPage() {
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
       <Container maxWidth="md">
-        <Typography variant="h4" component="h1" gutterBottom>
-          Support Tickets
-        </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+          }}
+        >
+          <Typography variant="h4" component="h1">
+            Support Tickets
+          </Typography>
+          <Button variant="contained" component={Link} href="/tickets/add">
+            New Ticket
+          </Button>
+        </Box>
         {isLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
             <CircularProgress />

@@ -9,5 +9,16 @@
     "finalAnswer": "",
     "createdAt": "2025-06-10T10:43:08.449Z",
     "updatedAt": "2025-06-10T10:43:08.449Z"
+  },
+  {
+    "id": "TK-1749553035239",
+    "subject": "Problem with accessing my account",
+    "email": "romain@evaneos.com",
+    "content": "I can't access my account for some reason, please help me out",
+    "status": "waiting_for_pickup",
+    "agentState": {},
+    "finalAnswer": "",
+    "createdAt": "2025-06-10T10:57:15.239Z",
+    "updatedAt": "2025-06-10T10:57:15.239Z"
   }
 ]

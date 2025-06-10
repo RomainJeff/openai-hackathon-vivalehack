@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useParams } from "next/navigation"
 import {
   Box,
   Typography,
@@ -98,7 +99,8 @@ The Support Team`,
   },
 ]
 
-export default function TicketPage({ params }: { params: { id: string } }) {
+export default function TicketPage() {
+  const params = useParams<{ id: string }>()
   const [ticket, setTicket] = useState<Ticket | null>(null)
   const [selectedProposal, setSelectedProposal] =
     useState<AIResponseProposal | null>(null)
