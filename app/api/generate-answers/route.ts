@@ -56,7 +56,7 @@ const supportAgents: Agent<Ticket>[] = [];
 for (const agent of getSupportAgents()) {
   if (agent.active === true) {
     let tools = [answerToCustomerTool, generateAnswerTool];
-    if (agent.autonomous) {
+    if (agent.autonomous === true) {
       tools = [autonomousAnswerToCustomerTool, generateAnswerTool];
     }
 
