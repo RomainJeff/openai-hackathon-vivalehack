@@ -21,10 +21,12 @@ const getStatusChip = (status: TicketStatus) => {
   switch (status) {
     case TicketStatus.WAITING_FOR_PICKUP:
       return <Chip label="Waiting for Agent" color="warning" />;
+    case TicketStatus.PICKED_UP_BY_AGENT:
+      return <Chip label="Picked up by Agent" color="info" />;
     case TicketStatus.AGENT_WAITING_FOR_HUMAN:
       return <Chip label="Waiting for Human" color="info" />;
-    case TicketStatus.CLOSED:
-      return <Chip label="Closed" color="success" />;
+    case TicketStatus.ANSWERED:
+      return <Chip label="Answered" color="success" />;
     default:
       return <Chip label={status} />;
   }
@@ -36,21 +38,57 @@ export default function TicketsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function getTickets() {
-      try {
-        const res = await fetch(`/api/tickets`);
-        if (!res.ok) {
-          throw new Error("Failed to fetch tickets");
+    const fetchTickets = async () => {
+      const res = await fetch(`/api/tickets`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch tickets");
+      }
+      return res.json();
+    };
+
+    const processAndSetTickets = (data: Ticket[]) => {
+      const sortedTickets = [...data].sort((a, b) => {
+        const aIsWaiting = a.status === TicketStatus.AGENT_WAITING_FOR_HUMAN;
+        const bIsWaiting = b.status === TicketStatus.AGENT_WAITING_FOR_HUMAN;
+        if (aIsWaiting && !bIsWaiting) {
+          return -1;
         }
-        const data = await res.json();
-        setTickets(data);
+        if (!aIsWaiting && bIsWaiting) {
+          return 1;
+        }
+        return 0;
+      });
+      setTickets(sortedTickets);
+    };
+
+    const initialLoad = async () => {
+      try {
+        const data = await fetchTickets();
+        processAndSetTickets(data);
+        setError(null);
       } catch (err: any) {
         setError(err.message);
       } finally {
         setIsLoading(false);
       }
-    }
-    getTickets();
+    };
+
+    const poll = async () => {
+      try {
+        const data = await fetchTickets();
+        processAndSetTickets(data);
+        setError(null);
+      } catch (err: any) {
+        // For polling, we don't want to show an error banner for a failed background fetch.
+        console.error("Polling for tickets failed.", err);
+      }
+    };
+
+    initialLoad();
+
+    const intervalId = setInterval(poll, 10000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   return (

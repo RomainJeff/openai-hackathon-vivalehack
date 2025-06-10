@@ -115,16 +115,16 @@ export default function TicketPage() {
           setTicket(data)
         } else {
           console.error("Failed to fetch ticket")
-          setTicket(null)
         }
       } catch (error) {
         console.error("An error occurred while fetching the ticket:", error)
-        setTicket(null)
       }
     }
 
     if (params.id) {
       fetchTicket()
+      const interval = setInterval(fetchTicket, 30000)
+      return () => clearInterval(interval)
     }
   }, [params.id])
 
