@@ -1,0 +1,48 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Coding style and formatting
+globs: *.ts[x]?
+---
+- **Project Context:** This is a TypeScript/React project using Material UI (MUI) and CSS Modules. Use `bun` as the package manager. Refer to `package.json` for dependencies and scripts.
+- **MUI Usage:** When working with MUI, always check the latest official documentation (https://mui.com/material-ui/getting-started/) before generating component usage examples or proposing solutions. Use MUI components according to the project's design system.
+- **Formatting:** Use 2 spaces for indentation. Use single quotes (') for all strings.
+- **Naming:**
+    - React component files: `PascalCase.tsx`
+    - Other `.ts` files: `camelCase.ts`
+    - Functions/Variables: `camelCase`
+    - Constants: `UPPERCASE_SNAKE_CASE`
+- **Coding Style:**
+    - Prefer `function componentName()` for React components and top-level functions over arrow functions.
+    - Use `Array<T>` for array types, not `T[]`.
+    - Always use named exports (`export const/function ...`) instead of default exports.
+    - Write clean code: Remove or avoid unused variables and imports.
+- **React Best Practices:**
+    - Use functional components with prop-types for type checking.
+    - Use the "function" keyword for component definitions.
+    - Minimize 'use client', 'useEffect', and 'setState'. Favor RSC.
+    - Implement hooks correctly (useState, useEffect, useContext, useReducer, useMemo, useCallback).
+    - Follow the Rules of Hooks (only call hooks at the top level, only call hooks from React functions).
+    - Create custom hooks to extract reusable component logic.
+    - Use React.memo() for component memoization when appropriate.
+    - Implement useCallback for memoizing functions passed as props.
+    - Use useMemo for expensive computations.
+    - Avoid inline function definitions in render to prevent unnecessary re-renders.
+    - Prefer composition over inheritance.
+    - Wrap client components in Suspense with fallback.
+    - Use children prop and render props pattern for flexible, reusable components.
+    - Use refs sparingly and mainly for DOM access.
+    - Prefer controlled components over uncontrolled components.
+    - Implement error boundaries to catch and handle errors gracefully.
+    - Use cleanup functions in useEffect to prevent memory leaks.
+    - Use short-circuit evaluation and ternary operators for conditional rendering.
+- **Imports:** Organize imports alphabetically within groups. Order the groups: React, external libraries, internal components/modules/types, CSS modules.
+- **Types:** Define custom types in the `types/` directory. Before adding a new type, check if a suitable one already exists there and reuse it.
