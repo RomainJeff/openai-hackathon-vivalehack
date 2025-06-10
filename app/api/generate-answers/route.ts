@@ -90,6 +90,7 @@ const customerSupportOrchestrator = new Agent<Ticket>({
   name: 'Customer Support Orchestrator',
   instructions: 'Choose the right agent to handle the ticket. Only handoff to one agent.',
   handoffs: supportAgents,
+  model: 'gpt-4o',
 });
 
 export async function POST(request: Request) {
@@ -137,12 +138,7 @@ async function handleHumanIntervention(ticket: Ticket) {
     state.approve(interruption);
   }
 
-  const result = await run(customerSupportOrchestrator, state);
-
-  ticket.handoffToAgentId = result.lastAgent?.name;
-  saveTicket(ticket);
-
-  return ticket;
+  await run(customerSupportOrchestrator, state);
 }
 
 async function handleCustomerSupportTicket(ticket: Ticket) {
@@ -154,6 +150,7 @@ async function handleCustomerSupportTicket(ticket: Ticket) {
     { context: ticket },
   );
 
+  ticket.handoffToAgentId = result.lastAgent?.name;
   ticket.agentState = JSON.stringify(result.state);
   ticket.status = TicketStatus.AGENT_WAITING_FOR_HUMAN;
   saveTicket(ticket);
