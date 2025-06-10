@@ -25,6 +25,8 @@ const getStatusChip = (status: TicketStatus) => {
       return <Chip label="Picked up by Agent" color="info" />;
     case TicketStatus.AGENT_WAITING_FOR_HUMAN:
       return <Chip label="Waiting for Human" color="error" />;
+    case TicketStatus.HUMAN_FEEDBACK_PROVIDED:
+      return <Chip label="Human feedback provided" color="success" />;
     case TicketStatus.ANSWERED:
       return <Chip label="Answered" color="success" />;
     default:
