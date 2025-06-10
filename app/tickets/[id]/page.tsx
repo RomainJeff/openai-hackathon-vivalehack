@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Box,
   Typography,
@@ -13,6 +13,7 @@ import {
   CardContent,
 } from "@mui/material"
 import { Send, ContentCopy } from "@mui/icons-material"
+import { Ticket } from "@/types/ticket"
 
 interface AIResponseProposal {
   id: string
@@ -22,17 +23,6 @@ interface AIResponseProposal {
   responseText: string
   reasoning: string
   estimatedReadTime: string
-}
-
-const currentTicket = {
-  id: "TK-001",
-  title: "Unable to access premium features after payment",
-  description:
-    "I upgraded to premium yesterday but still cannot access the advanced analytics dashboard. Payment went through successfully. This is really frustrating as I need these features for my presentation tomorrow morning.",
-  customer: {
-    name: "Sarah Chen",
-    email: "sarah.chen@email.com",
-  },
 }
 
 const aiProposals: AIResponseProposal[] = [
@@ -109,9 +99,32 @@ The Support Team`,
 ]
 
 export default function TicketPage({ params }: { params: { id: string } }) {
+  const [ticket, setTicket] = useState<Ticket | null>(null)
   const [selectedProposal, setSelectedProposal] =
     useState<AIResponseProposal | null>(null)
   const [editedResponse, setEditedResponse] = useState("")
+
+  useEffect(() => {
+    const fetchTicket = async () => {
+      try {
+        const response = await fetch(`/api/tickets/${params.id}`)
+        if (response.ok) {
+          const data = await response.json()
+          setTicket(data)
+        } else {
+          console.error("Failed to fetch ticket")
+          setTicket(null)
+        }
+      } catch (error) {
+        console.error("An error occurred while fetching the ticket:", error)
+        setTicket(null)
+      }
+    }
+
+    if (params.id) {
+      fetchTicket()
+    }
+  }, [params.id])
 
   const handleSelectProposal = (proposal: AIResponseProposal) => {
     setSelectedProposal(proposal)
@@ -152,6 +165,14 @@ export default function TicketPage({ params }: { params: { id: string } }) {
     }
   }
 
+  if (!ticket) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+        <Typography>Loading ticket...</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
       <Container maxWidth="lg">
@@ -166,13 +187,12 @@ export default function TicketPage({ params }: { params: { id: string } }) {
           }}
         >
           <Typography variant="h6" component="h2" gutterBottom>
-            {currentTicket.title}
+            {ticket.subject}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            From: {currentTicket.customer.name} ({currentTicket.customer.email})
-            - Ticket ID: {params.id}
+            From: {ticket.email} - Ticket ID: {params.id}
           </Typography>
-          <Typography variant="body1">{currentTicket.description}</Typography>
+          <Typography variant="body1">{ticket.content}</Typography>
         </Box>
 
         <Typography variant="h6" component="h2" sx={{ mb: 2 }}>

@@ -1,56 +1,85 @@
-import { Container, List, ListItem, ListItemText, Typography, Chip, ListItemButton } from "@mui/material";
+"use client";
+
+import {
+  Container,
+  List,
+  ListItem,
+  ListItemText,
+  Typography,
+  Chip,
+  ListItemButton,
+  Box,
+  CircularProgress,
+  Alert,
+} from "@mui/material";
 import Link from "next/link";
+import { Ticket, TicketStatus } from "@/types/ticket";
+import { useEffect, useState } from "react";
 
-const tickets = [
-  {
-    id: "TK-001",
-    title: "Unable to access premium features after payment",
-    status: "waiting for ai pickup",
-  },
-  {
-    id: "TK-002",
-    title: "Website is loading very slowly",
-    status: "waiting for human feedback",
-  },
-  {
-    id: "TK-003",
-    title: "How do I reset my password?",
-    status: "answered",
-  },
-];
-
-const getStatusColor = (status: string) => {
+const getStatusChip = (status: TicketStatus) => {
   switch (status) {
-    case "waiting for ai pickup":
-      return "warning";
-    case "waiting for human feedback":
-      return "info";
-    case "answered":
-      return "success";
+    case TicketStatus.WAITING_FOR_PICKUP:
+      return <Chip label="Waiting for Agent" color="warning" />;
+    case TicketStatus.AGENT_WAITING_FOR_HUMAN:
+      return <Chip label="Waiting for Human" color="info" />;
+    case TicketStatus.CLOSED:
+      return <Chip label="Closed" color="success" />;
     default:
-      return "default";
+      return <Chip label={status} />;
   }
 };
 
 export default function TicketsPage() {
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function getTickets() {
+      try {
+        const res = await fetch(`/api/tickets`);
+        if (!res.ok) {
+          throw new Error("Failed to fetch tickets");
+        }
+        const data = await res.json();
+        setTickets(data);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    getTickets();
+  }, []);
+
   return (
-    <Container>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Support Tickets
-      </Typography>
-      <List>
-        {tickets.map((ticket) => (
-          <ListItem key={ticket.id} disablePadding>
-            <ListItemButton component={Link} href={`/tickets/${ticket.id}`}>
-              <ListItemText
-                primary={ticket.title}
-                secondary={`Ticket ID: ${ticket.id}`}
-              />
-              <Chip label={ticket.status} color={getStatusColor(ticket.status)} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
-    </Container>
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
+      <Container maxWidth="md">
+        <Typography variant="h4" component="h1" gutterBottom>
+          Support Tickets
+        </Typography>
+        {isLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Alert severity="error">{error}</Alert>
+        ) : (
+          <List>
+            {tickets.map((ticket) => (
+              <ListItem key={ticket.id} disablePadding>
+                <ListItemButton component={Link} href={`/tickets/${ticket.id}`}>
+                  <ListItemText
+                    primary={ticket.subject}
+                    secondary={`Ticket ID: ${ticket.id}`}
+                  />
+                  {getStatusChip(ticket.status)}
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        )}
+      </Container>
+    </Box>
   );
 } 

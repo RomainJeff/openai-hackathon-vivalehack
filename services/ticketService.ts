@@ -3,19 +3,22 @@ import { Ticket } from "@/types/ticket";
 import fs from 'fs';
 import path from 'path';
 
-const TICKETS_FILE = path.resolve(__dirname, './data/tickets.json');
+const TICKETS_FILE = path.join(process.cwd(), 'data', 'tickets.json');
 
-const getTickets = (): Ticket[] => {
+export const getTickets = (): Ticket[] => {
     try {
         const data = fs.readFileSync(TICKETS_FILE, 'utf-8');
         return JSON.parse(data);
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === 'ENOENT') {
+            return [];
+        }
         console.error('Error reading tickets:', error);
         return [];
     }
 };
 
-const getTicketById = (id: string): Ticket | undefined => {
+export const getTicketById = (id: string): Ticket | undefined => {
     const tickets = getTickets();
     return tickets.find(ticket => ticket.id === id);
 };
