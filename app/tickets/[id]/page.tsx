@@ -44,8 +44,7 @@ export default function TicketPage() {
 
   const getHandoffToAgentChip = (handoffToAgentId: string | undefined) => {
     if (!handoffToAgentId) return null;
-    const agent = availableAgents.find((agent) => agent.id === handoffToAgentId);
-    return <Chip label={agent?.name} color="info" variant="outlined" sx={{ ml: 1 }}/>;
+    return <Chip label={handoffToAgentId} color="info" variant="outlined" sx={{ ml: 1 }}/>;
   };
 
   useEffect(() => {
@@ -89,8 +88,6 @@ export default function TicketPage() {
     if (!ticket) return;
 
     try {
-      const updatedMemory = {
-      }
       const response = await fetch(`/api/tickets/${params.id}`, {
         method: 'PUT',
         headers: {
@@ -112,6 +109,24 @@ export default function TicketPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ ticketId: ticket.id }),
+        });
+
+        // Update the agent memory
+        const handoffAgent = availableAgents.find((agent) => agent.name === ticket.handoffToAgentId);
+        const updatedMemory = {
+          ...handoffAgent?.memory || {},
+          [ticket.content]: {
+            options: ticket.proposedAnswers,
+            humanPreference: editedResponse,
+          },
+        }
+
+        fetch(`/api/agents/${handoffAgent?.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ memory: updatedMemory }),
         });
       }
     } catch (error) {

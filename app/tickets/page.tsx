@@ -16,7 +16,6 @@ import {
 import Link from "next/link";
 import { Ticket, TicketStatus } from "@/types/ticket";
 import { useEffect, useState, useRef } from "react";
-import { SupportAgent } from "@/types/support-agent";
 
 const getStatusChip = (status: TicketStatus) => {
   switch (status) {
@@ -38,12 +37,10 @@ export default function TicketsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const processingTickets = useRef(new Set<string>());
-  const [availableAgents, setAvailableAgents] = useState<SupportAgent[]>([]);
 
   const getHandoffToAgentChip = (handoffToAgentId: string | undefined) => {
     if (!handoffToAgentId) return null;
-    const agent = availableAgents.find((agent) => agent.id === handoffToAgentId);
-    return <Chip label={agent?.name} color="info" variant="outlined" sx={{ ml: 1 }}/>;
+    return <Chip label={handoffToAgentId} color="info" variant="outlined" sx={{ ml: 1 }}/>;
   };
 
   useEffect(() => {
@@ -75,12 +72,6 @@ export default function TicketsPage() {
         const data = await fetchTickets();
         processAndSetTickets(data);
         setError(null);
-        const agents = await fetch("/api/agents");
-        if (!agents.ok) {
-          throw new Error("Failed to fetch agents");
-        }
-        const agentsData = await agents.json();
-        setAvailableAgents(agentsData);
       } catch (err: any) {
         setError(err.message);
       } finally {
