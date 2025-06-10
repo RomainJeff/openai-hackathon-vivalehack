@@ -11,6 +11,7 @@ export interface Ticket {
     content: string;
     email: string;
     status: TicketStatus;
+    proposedAnswers: string[];
     agentState: any;
     finalAnswer: string;
     createdAt: Date;

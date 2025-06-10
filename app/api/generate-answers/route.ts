@@ -6,29 +6,23 @@ import { Ticket, TicketStatus } from '@/types/ticket';
 
 const generateAnswerTool = tool({
   name: 'generateAnswer',
-  description: 'Use this tool to draft 3 different possible answers to the customer query. The answers should be polite, helpful, and offer different approaches if possible (e.g., one direct answer, one with more questions for clarification, one with alternative solutions).',
+  description: 'Use this tool to draft 3 different possible answers to the customer query. The answers should be polite, helpful, and offer different approaches if possible (e.g., one direct answer, one with more questions for clarification, one with alternative solutions). Only if the ticket status is waiting_for_pickup.',
   parameters: z.object({
     answers: z.array(z.string()).describe('The answers to the customer query.'),
   }),
   execute: async (answers, runContext?: RunContext<Ticket>) => {
     const ticket = runContext?.context as Ticket;
     ticket.status = TicketStatus.PICKED_UP_BY_AGENT;
+    ticket.proposedAnswers = answers.answers;
     saveTicket(ticket);
 
     return answers;
   },
 });
 
-const generateAnswerAgent = new Agent<Ticket>({
-  name: 'Generate Answer Agent',
-  instructions: 'You are a helpful customer support agent.',
-  tools: [generateAnswerTool],
-  modelSettings: { toolChoice: 'generateAnswer' },
-});
-
 const answerToCustomerTool = tool({
   name: 'answerToCustomer',
-  description: 'Use this tool to answer the customer.',
+  description: 'Use this tool to answer the customer, only if the ticket status is picked_up_by_agent.',
   parameters: z.object({}),
   needsApproval: async (_context) => {
     const ticket = _context.context as Ticket;
@@ -43,21 +37,15 @@ const answerToCustomerTool = tool({
   }
 });
 
-const answerToCustomerAgent = new Agent<Ticket>({
-  name: 'Answer to Customer Agent',
-  instructions: 'You are a helpful customer support agent.',
-  tools: [answerToCustomerTool],
-  modelSettings: { toolChoice: 'answerToCustomer' },
-});
-
-const orchestratorAgent = Agent.create({
-  name: 'Orchestrator agent',
+const customerSupportAgent = new Agent<Ticket>({
+  name: 'Customer Support Agent',
   instructions: [
-    'You are the orchestrator agent. You will be given a ticket with a customer query and a ticket status.',
-    'If the ticket status is waiting_for_pickup, you will hand off to the generate answer agent to generate a list of answers, then hand off to the answer to customer agent to answer the customer query.',
-    'If the ticket status is picked_up_by_agent, you will hand off to the answer to customer agent to answer the customer query.',
+    'You are a helpful customer support agent. You will be given a ticket with a customer query and a ticket status.',
+    'If the ticket status is waiting_for_pickup, call the generate answer tool to generate a list of answers, then call the answer to customer tool to answer the customer query.',
+    'If the ticket status is picked_up_by_agent, call the answer to customer tool to answer the customer query.',
   ].join('\n'),
-  handoffs: [generateAnswerAgent, answerToCustomerAgent],
+  tools: [answerToCustomerTool, generateAnswerTool],
+  model: 'gpt-4o',
 });
 
 export async function POST(request: Request) {
@@ -77,8 +65,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const response = await handleCustomerSupport(ticket);
-    return NextResponse.json(response);
+    const processedTicket = await handleCustomerSupportTicket(ticket);
+    return NextResponse.json(processedTicket);
   } catch (error) {
     console.error('Error handling customer support:', error);
     const errorMessage =
@@ -89,11 +77,11 @@ export async function POST(request: Request) {
   }
 }
 
-async function handleCustomerSupport(ticket: Ticket) {
+async function handleCustomerSupportTicket(ticket: Ticket) {
   console.log('Processing ticket:', ticket.id);
 
   const result = await run(
-    orchestratorAgent,
+    customerSupportAgent,
     `Here is the customer query: "${ticket.content}", the ticket status is ${ticket.status}`,
     { context: ticket },
   );
@@ -102,5 +90,5 @@ async function handleCustomerSupport(ticket: Ticket) {
   ticket.status = TicketStatus.AGENT_WAITING_FOR_HUMAN;
   saveTicket(ticket);
 
-  return result.finalOutput;
+  return ticket;
 }
