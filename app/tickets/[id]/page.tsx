@@ -74,7 +74,7 @@ export default function TicketPage() {
     if (params.id) {
       fetchTicket()
       fetchAgents()
-      const interval = setInterval(fetchTicket, 30000)
+      const interval = setInterval(fetchTicket, 10000)
       return () => clearInterval(interval)
     }
   }, [params.id])

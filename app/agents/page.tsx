@@ -217,6 +217,37 @@ export default function AgentsPage() {
                             Add Specialty
                           </Button>
                         </Box>
+                        <Box>
+                          <Typography variant="subtitle1" sx={{ mb: 1 }}>Memory</Typography>
+                          {editingAgent.memory && Object.keys(editingAgent.memory).length > 0 ? (
+                            Object.entries(editingAgent.memory).map(([key, value]) => (
+                              <Box key={key} sx={{ mb: 2, p: 2, border: '1px solid', borderColor: 'grey.200', borderRadius: 1 }}>
+                                <Typography variant="body1" component="p" gutterBottom sx={{ fontWeight: 500 }}>
+                                  {key}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                                  Preferred response:
+                                </Typography>
+                                <Chip label={value.humanPreference} color="success" size="small" sx={{ mb: 1.5 }} />
+
+                                {value.options.filter(o => o !== value.humanPreference).length > 0 && (
+                                  <>
+                                    <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                                      Other options considered:
+                                    </Typography>
+                                    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                                      {value.options.filter(o => o !== value.humanPreference).map(option => (
+                                          <Chip key={option} label={option} size="small" variant="outlined" />
+                                      ))}
+                                    </Stack>
+                                  </>
+                                )}
+                              </Box>
+                            ))
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">This agent has no memories.</Typography>
+                          )}
+                        </Box>
                         <FormControlLabel
                           control={
                             <Switch
