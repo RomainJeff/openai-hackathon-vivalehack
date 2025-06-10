@@ -1,25 +1,98 @@
 [
   {
     "id": "TK-1749552188449",
-    "subject": "Test",
-    "email": "romain@evaneos.com",
-    "content": "test",
+    "subject": "Flight Cancellation Request",
+    "email": "john.smith@email.com",
+    "content": "I need to cancel my flight from New York to London on December 15th due to a family emergency. Can you help me with the refund process?",
     "status": "waiting_for_pickup",
-    "handoffToAgentId": "04e7fff5-3930-486d-9348-23c6551ccc9d",
-    "agentState": {},
+    "proposedAnswers": [],
+    "agentState": "",
     "finalAnswer": "",
-    "createdAt": "2025-06-10T10:43:08.449Z",
-    "updatedAt": "2025-06-10T10:43:08.449Z"
+    "createdAt": "2024-12-01T10:43:08.449Z",
+    "updatedAt": "2024-12-01T10:43:08.449Z"
   },
   {
     "id": "TK-1749553035239",
-    "subject": "Problem with accessing my account",
-    "email": "romain@evaneos.com",
-    "content": "I can't access my account for some reason, please help me out",
+    "subject": "Hotel Booking Issue",
+    "email": "sarah.johnson@email.com",
+    "content": "I booked a hotel room in Paris for 3 nights but received a confirmation for only 2 nights. My reservation number is HTL123456. Please help me correct this.",
     "status": "waiting_for_pickup",
-    "agentState": {},
+    "proposedAnswers": [],
+    "agentState": "",
     "finalAnswer": "",
-    "createdAt": "2025-06-10T10:57:15.239Z",
-    "updatedAt": "2025-06-10T10:57:15.239Z"
+    "createdAt": "2024-12-01T10:57:15.239Z",
+    "updatedAt": "2024-12-01T10:57:15.239Z"
+  },
+  {
+    "id": "TK-1749554120580",
+    "subject": "Car Rental Modification",
+    "email": "mike.wilson@email.com",
+    "content": "I need to change my car rental pickup location from downtown to the airport. My booking reference is CAR789012. Is this possible and are there any additional fees?",
+    "status": "waiting_for_pickup",
+    "proposedAnswers": [],
+    "agentState": "",
+    "finalAnswer": "",
+    "createdAt": "2024-12-01T11:15:20.580Z",
+    "updatedAt": "2024-12-01T11:15:20.580Z"
+  },
+  {
+    "id": "TK-1749555205891",
+    "subject": "Travel Insurance Claim",
+    "email": "emma.davis@email.com",
+    "content": "My flight was delayed for 8 hours and I missed my connecting flight. I had to pay for an overnight hotel stay. How do I file a claim for this expense under my travel insurance policy?",
+    "status": "waiting_for_pickup",
+    "proposedAnswers": [],
+    "agentState": "",
+    "finalAnswer": "",
+    "createdAt": "2024-12-01T11:33:25.891Z",
+    "updatedAt": "2024-12-01T11:33:25.891Z"
+  },
+  {
+    "id": "TK-1749556312047",
+    "subject": "Visa Requirements for Japan",
+    "email": "alex.chen@email.com",
+    "content": "I'm planning to travel to Japan next month for tourism. I'm a US citizen. Do I need a visa and what documents are required? Also, are there any COVID-19 restrictions still in place?",
+    "status": "waiting_for_pickup",
+    "proposedAnswers": [],
+    "agentState": "",
+    "finalAnswer": "",
+    "createdAt": "2024-12-01T11:51:52.047Z",
+    "updatedAt": "2024-12-01T11:51:52.047Z"
+  },
+  {
+    "id": "TK-1749557418293",
+    "subject": "Flight Delay Compensation",
+    "email": "lisa.brown@email.com",
+    "content": "My flight from Madrid to Berlin was delayed by 4 hours yesterday. I understand I might be entitled to compensation under EU regulations. How do I claim this?",
+    "status": "waiting_for_pickup",
+    "proposedAnswers": [],
+    "agentState": "",
+    "finalAnswer": "",
+    "createdAt": "2024-12-01T12:10:18.293Z",
+    "updatedAt": "2024-12-01T12:10:18.293Z"
+  },
+  {
+    "id": "TK-1749558524539",
+    "subject": "Resort Upgrade Request",
+    "email": "david.martinez@email.com",
+    "content": "I have a reservation at the Sunset Resort in Cancun for my honeymoon next week. Is it possible to upgrade to an ocean view room? I'm willing to pay the difference.",
+    "status": "waiting_for_pickup",
+    "proposedAnswers": [],
+    "agentState": "",
+    "finalAnswer": "",
+    "createdAt": "2024-12-01T12:28:44.539Z",
+    "updatedAt": "2024-12-01T12:28:44.539Z"
+  },
+  {
+    "id": "TK-1749559630785",
+    "subject": "Train Ticket Exchange",
+    "email": "anna.kowalski@email.com",
+    "content": "I bought a train ticket from London to Edinburgh for tomorrow at 9 AM, but I need to travel in the evening instead. Can I exchange this ticket for a later departure?",
+    "status": "waiting_for_pickup",
+    "proposedAnswers": [],
+    "agentState": "",
+    "finalAnswer": "",
+    "createdAt": "2024-12-01T12:47:10.785Z",
+    "updatedAt": "2024-12-01T12:47:10.785Z"
   }
 ]
