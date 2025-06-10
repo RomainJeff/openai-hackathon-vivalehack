@@ -19,8 +19,9 @@ import {
   ListItemButton,
   FormControlLabel,
   Chip,
+  IconButton,
 } from "@mui/material";
-import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import { ExpandLess, ExpandMore, Add, Remove } from "@mui/icons-material";
 import { SupportAgent } from "@/types/support-agent";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -73,14 +74,34 @@ export default function AgentsPage() {
     }
   };
 
-  const handleSpecialtiesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSpecialtyChange = (index: number, value: string) => {
+    if (editingAgent) {
+      const newSpecialties = [...editingAgent.specialties];
+      newSpecialties[index] = value;
+      setEditingAgent({
+        ...editingAgent,
+        specialties: newSpecialties,
+      });
+    }
+  };
+
+  const handleAddSpecialty = () => {
     if (editingAgent) {
       setEditingAgent({
         ...editingAgent,
-        specialties: e.target.value.split(',').map(s => s.trim()),
+        specialties: [...editingAgent.specialties, ""],
       });
     }
-  }
+  };
+
+  const handleRemoveSpecialty = (index: number) => {
+    if (editingAgent) {
+      setEditingAgent({
+        ...editingAgent,
+        specialties: editingAgent.specialties.filter((_, i) => i !== index),
+      });
+    }
+  };
 
   const handleSave = async (agentId: string) => {
     if (!editingAgent) return;
@@ -176,13 +197,26 @@ export default function AgentsPage() {
                           multiline
                           rows={3}
                         />
-                         <TextField
-                          label="Specialties (comma-separated)"
-                          name="specialties"
-                          value={editingAgent.specialties.join(', ')}
-                          onChange={handleSpecialtiesChange}
-                          fullWidth
-                        />
+                        <Box>
+                          <Typography variant="subtitle1" sx={{ mb: 1 }}>Specialties</Typography>
+                          {editingAgent.specialties.map((specialty, index) => (
+                            <Stack direction="row" key={index} spacing={1} sx={{ mb: 1, alignItems: 'center' }}>
+                              <TextField
+                                placeholder="Enter a specialty description"
+                                value={specialty}
+                                onChange={(e) => handleSpecialtyChange(index, e.target.value)}
+                                fullWidth
+                                multiline
+                              />
+                              <IconButton onClick={() => handleRemoveSpecialty(index)} aria-label="Remove specialty">
+                                <Remove />
+                              </IconButton>
+                            </Stack>
+                          ))}
+                          <Button startIcon={<Add />} onClick={handleAddSpecialty}>
+                            Add Specialty
+                          </Button>
+                        </Box>
                         <FormControlLabel
                           control={
                             <Switch
