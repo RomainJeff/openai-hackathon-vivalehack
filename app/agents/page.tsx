@@ -19,7 +19,9 @@ import {
   Stack,
   ListItemButton,
   FormControlLabel,
+  Chip,
 } from "@mui/material";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { SupportAgent } from "@/types/support-agent";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -139,6 +141,11 @@ export default function AgentsPage() {
                       primary={agent.name}
                       secondary={agent.description}
                     />
+                    <Stack direction="row" spacing={1} sx={{ ml: 2, alignItems: 'center' }}>
+                      <Chip label="Active" size="small" color={agent.active ? "success" : "default"} />
+                      <Chip label="Autonomous" size="small" color={agent.autonomous ? "success" : "default"} />
+                    </Stack>
+                    {expandedAgentId === agent.id ? <ExpandLess /> : <ExpandMore />}
                  </ListItemButton>
                 <Collapse in={expandedAgentId === agent.id} timeout="auto" unmountOnExit>
                   {editingAgent && (
