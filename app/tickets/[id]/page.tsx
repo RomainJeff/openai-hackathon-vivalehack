@@ -15,6 +15,7 @@ import {
 } from "@mui/material"
 import { Send } from "@mui/icons-material"
 import { Ticket, TicketStatus } from "@/types/ticket"
+import { SupportAgent } from "@/types/support-agent"
 
 const getStatusChip = (status: TicketStatus) => {
   switch (status) {
@@ -39,6 +40,13 @@ export default function TicketPage() {
   const [selectedProposal, setSelectedProposal] =
     useState<number | null>(null)
   const [editedResponse, setEditedResponse] = useState("")
+  const [availableAgents, setAvailableAgents] = useState<SupportAgent[]>([]);
+
+  const getHandoffToAgentChip = (handoffToAgentId: string | undefined) => {
+    if (!handoffToAgentId) return null;
+    const agent = availableAgents.find((agent) => agent.id === handoffToAgentId);
+    return <Chip label={agent?.name} color="info" variant="outlined" sx={{ ml: 1 }}/>;
+  };
 
   useEffect(() => {
     const fetchTicket = async () => {
@@ -55,8 +63,18 @@ export default function TicketPage() {
       }
     }
 
+    const fetchAgents = async () => {
+      const agents = await fetch("/api/agents");
+      if (!agents.ok) {
+        throw new Error("Failed to fetch agents");
+      }
+      const agentsData = await agents.json();
+      setAvailableAgents(agentsData);
+    }
+
     if (params.id) {
       fetchTicket()
+      fetchAgents()
       const interval = setInterval(fetchTicket, 30000)
       return () => clearInterval(interval)
     }
@@ -131,7 +149,10 @@ export default function TicketPage() {
                 From: {ticket.email} - Ticket ID: {params.id}
               </Typography>
             </Box>
-            {getStatusChip(ticket.status)}
+            <Box>
+              {getStatusChip(ticket.status)}
+              {getHandoffToAgentChip(ticket.handoffToAgentId)}
+            </Box>
           </Box>
           <Typography variant="body1">{ticket.content}</Typography>
         </Box>
