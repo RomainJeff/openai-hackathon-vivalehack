@@ -38,10 +38,28 @@ const answerToCustomerTool = tool({
   }
 });
 
+const autonomousAnswerToCustomerTool = tool({
+  name: 'answerToCustomer',
+  description: 'Use this tool to answer the customer, only if the ticket status is picked_up_by_agent.',
+  parameters: z.object({}),
+  execute: async (_args, runContext?: RunContext<Ticket>) => {
+    const ticket = runContext?.context as Ticket;
+    ticket.status = TicketStatus.ANSWERED;
+    saveTicket(ticket);
+
+    return 'Customer answered';
+  }
+});
+
 const supportAgents: Agent<Ticket>[] = [];
 
 for (const agent of getSupportAgents()) {
   if (agent.active === true) {
+    let tools = [answerToCustomerTool, generateAnswerTool];
+    if (agent.autonomous) {
+      tools = [autonomousAnswerToCustomerTool, generateAnswerTool];
+    }
+
     const supportAgent = new Agent<Ticket>({
       name: agent.name,
       instructions: [
@@ -55,7 +73,7 @@ for (const agent of getSupportAgents()) {
         'Here is your memory:',
         agent.memory.join('\n'),
       ].join('\n\n'),
-      tools: [answerToCustomerTool, generateAnswerTool],
+      tools: tools,
       model: 'gpt-4o',
       handoffDescription: [
         'Here are the agent specialities so that you can handoff to the right agent:',
