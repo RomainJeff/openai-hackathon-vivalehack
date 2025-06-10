@@ -2,7 +2,7 @@ import { Agent, run, RunContext, tool } from '@openai/agents';
 import { z } from 'zod';
 import { NextResponse } from 'next/server';
 import { getTicketById } from '@/services/ticketService';
-import { Ticket } from '@/types/ticket';
+import { Ticket, TicketStatus } from '@/types/ticket';
 
 const generateAnswerTool = tool({
   name: 'generateAnswer',
@@ -25,13 +25,18 @@ const supportAgent = new Agent<Ticket>({
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const ticket: Ticket = body.ticket;
+  const ticketId: string = body.ticketId;
 
-  if (!ticket) {
+  if (!ticketId) {
     return NextResponse.json(
-      { error: 'ticket is required' },
+      { error: 'ticketId is required' },
       { status: 400 },
     );
+  }
+
+  const ticket = getTicketById(ticketId);
+  if (!ticket) {
+    return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
   }
 
   try {
