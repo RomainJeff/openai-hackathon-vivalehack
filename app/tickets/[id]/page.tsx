@@ -71,6 +71,8 @@ export default function TicketPage() {
     if (!ticket) return;
 
     try {
+      const updatedMemory = {
+      }
       const response = await fetch(`/api/tickets/${params.id}`, {
         method: 'PUT',
         headers: {

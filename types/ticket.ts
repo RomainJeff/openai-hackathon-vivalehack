@@ -17,4 +17,5 @@ export interface Ticket {
     finalAnswer: string;
     createdAt: Date;
     updatedAt: Date;
+    handoffToAgentId?: string;
 }

@@ -4,7 +4,7 @@
     "name": "Default Agent",
     "description": "Default agent for handling tickets",
     "personality": "You are a helpful assistant that can answer questions.",
-    "memory": [],
+    "memory": {},
     "autonomous": false,
     "specialties": [],
     "active": true
