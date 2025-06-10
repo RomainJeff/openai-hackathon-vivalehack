@@ -1,0 +1,12 @@
+[
+  {
+    "id": "04e7fff5-3930-486d-9348-23c6551ccc9d",
+    "name": "Default Agent",
+    "description": "Default agent for handling tickets",
+    "personality": "You are a helpful assistant that can answer questions.",
+    "memory": [],
+    "autonomous": false,
+    "specialties": [],
+    "active": true
+  }
+]
