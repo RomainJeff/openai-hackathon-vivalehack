@@ -1,10 +1,6 @@
 import ThemeRegistry from '@/components/ThemeRegistry';
 import './globals.css'
 
-export const metadata = {
-  generator: 'v0.dev'
-};
-
 export default function RootLayout({
   children,
 }: {

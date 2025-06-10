@@ -1,5 +1,5 @@
-import Ticket from "@/components/Ticket";
+import { redirect } from 'next/navigation';
 
-export default function AIResponseProposals() {
-  return <Ticket />;
+export default function HomePage() {
+  redirect('/tickets');
 }
