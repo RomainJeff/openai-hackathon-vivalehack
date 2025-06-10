@@ -1,4 +1,4 @@
-import { Agent, run, RunContext, tool } from '@openai/agents';
+import { Agent, run, RunContext, RunState, tool } from '@openai/agents';
 import { z } from 'zod';
 import { NextResponse } from 'next/server';
 import { getTicketById, saveTicket } from '@/services/ticketService';
@@ -65,8 +65,15 @@ export async function POST(request: Request) {
   }
 
   try {
-    const processedTicket = await handleCustomerSupportTicket(ticket);
-    return NextResponse.json(processedTicket);
+    if (ticket.status === TicketStatus.WAITING_FOR_PICKUP || ticket.status === TicketStatus.PICKED_UP_BY_AGENT) {
+      await handleCustomerSupportTicket(ticket);
+      return NextResponse.json({ message: 'Customer support ticket processeded, waiting for human intervention' });
+    } else if (ticket.status === TicketStatus.HUMAN_FEEDBACK_PROVIDED) {
+      await handleHumanIntervention(ticket);
+      return NextResponse.json({ message: 'Customer support ticket answered' });
+    } else {
+      return NextResponse.json(ticket);
+    }
   } catch (error) {
     console.error('Error handling customer support:', error);
     const errorMessage =
@@ -75,6 +82,20 @@ export async function POST(request: Request) {
         : 'Failed to handle customer support';
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
+}
+
+async function handleHumanIntervention(ticket: Ticket) {
+  console.log('Processing human intervention for ticket:', ticket.id);
+
+  const state = await RunState.fromString(customerSupportAgent, ticket.agentState);
+
+  for (const interruption of state._currentStep?.data.interruptions) {
+    state.approve(interruption);
+  }
+
+  await run(customerSupportAgent, state);
+
+  return ticket;
 }
 
 async function handleCustomerSupportTicket(ticket: Ticket) {
