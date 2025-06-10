@@ -2,6 +2,7 @@ import { Agent, run, RunContext, RunState, tool } from '@openai/agents';
 import { z } from 'zod';
 import { NextResponse } from 'next/server';
 import { getTicketById, saveTicket } from '@/services/ticketService';
+import { getSupportAgents } from '@/services/supportAgentService';
 import { Ticket, TicketStatus } from '@/types/ticket';
 
 const generateAnswerTool = tool({
@@ -37,15 +38,38 @@ const answerToCustomerTool = tool({
   }
 });
 
-const customerSupportAgent = new Agent<Ticket>({
-  name: 'Customer Support Agent',
-  instructions: [
-    'You are a helpful customer support agent. You will be given a ticket with a customer query and a ticket status.',
-    'If the ticket status is waiting_for_pickup, call the generate answer tool to generate a list of answers, then call the answer to customer tool to answer the customer query.',
-    'If the ticket status is picked_up_by_agent, call the answer to customer tool to answer the customer query.',
-  ].join('\n'),
-  tools: [answerToCustomerTool, generateAnswerTool],
-  model: 'gpt-4o',
+const supportAgents: Agent<Ticket>[] = [];
+
+for (const agent of getSupportAgents()) {
+  if (agent.active === true) {
+    const supportAgent = new Agent<Ticket>({
+      name: agent.name,
+      instructions: [
+        'You will be given a ticket with a customer query and a ticket status.',
+        'If the ticket status is waiting_for_pickup, call the generate answer tool to generate a list of answers, then call the answer to customer tool to answer the customer query.',
+        'If the ticket status is picked_up_by_agent, call the answer to customer tool to answer the customer query.',
+        'Here is your description:',
+        agent.description,
+        'Here is your personality:',
+        agent.personality,
+        'Here is your memory:',
+        agent.memory.join('\n'),
+      ].join('\n\n'),
+      tools: [answerToCustomerTool, generateAnswerTool],
+      model: 'gpt-4o',
+      handoffDescription: [
+        'Here are the agent specialities so that you can handoff to the right agent:',
+        agent.specialties.join('\n'),
+      ].join('\n\n')
+    });
+    supportAgents.push(supportAgent);
+  }
+}
+
+const customerSupportOrchestrator = new Agent<Ticket>({
+  name: 'Customer Support Orchestrator',
+  instructions: 'Choose the right agent to handle the ticket. Only handoff to one agent.',
+  handoffs: supportAgents,
 });
 
 export async function POST(request: Request) {
@@ -87,13 +111,13 @@ export async function POST(request: Request) {
 async function handleHumanIntervention(ticket: Ticket) {
   console.log('Processing human intervention for ticket:', ticket.id);
 
-  const state = await RunState.fromString(customerSupportAgent, ticket.agentState);
+  const state = await RunState.fromString(customerSupportOrchestrator, ticket.agentState);
 
   for (const interruption of state._currentStep?.data.interruptions) {
     state.approve(interruption);
   }
 
-  await run(customerSupportAgent, state);
+  await run(customerSupportOrchestrator, state);
 
   return ticket;
 }
@@ -102,7 +126,7 @@ async function handleCustomerSupportTicket(ticket: Ticket) {
   console.log('Processing ticket:', ticket.id);
 
   const result = await run(
-    customerSupportAgent,
+    customerSupportOrchestrator,
     `Here is the customer query: "${ticket.content}", the ticket status is ${ticket.status}`,
     { context: ticket },
   );
