@@ -24,6 +24,7 @@ export async function POST(request: Request) {
     finalAnswer: '',
     createdAt: new Date(),
     updatedAt: new Date(),
+    proposedAnswers: [],
   };
 
   saveTicket(newTicket);

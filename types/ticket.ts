@@ -2,6 +2,7 @@ export enum TicketStatus {
     WAITING_FOR_PICKUP = "waiting_for_pickup",
     PICKED_UP_BY_AGENT = "picked_up_by_agent",
     AGENT_WAITING_FOR_HUMAN = "agent_waiting_for_human",
+    HUMAN_FEEDBACK_PROVIDED = "human_feedback_provided",
     ANSWERED = "answered",
 }
 

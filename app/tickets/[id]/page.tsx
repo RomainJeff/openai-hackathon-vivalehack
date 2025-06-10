@@ -11,93 +11,10 @@ import {
   Container,
   Stack,
   Card,
-  CardContent,
+  Alert,
 } from "@mui/material"
-import { Send, ContentCopy } from "@mui/icons-material"
+import { Send } from "@mui/icons-material"
 import { Ticket, TicketStatus } from "@/types/ticket"
-
-interface AIResponseProposal {
-  id: string
-  tone: "professional" | "friendly" | "empathetic" | "direct"
-  approach: "solution-focused" | "investigative" | "escalation" | "educational"
-  confidence: number
-  responseText: string
-  reasoning: string
-  estimatedReadTime: string
-}
-
-const aiProposals: AIResponseProposal[] = [
-  {
-    id: "proposal-1",
-    tone: "empathetic",
-    approach: "solution-focused",
-    confidence: 94,
-    estimatedReadTime: "30 sec",
-    responseText: `Hi Sarah,
-
-I completely understand your frustration, especially with your presentation coming up tomorrow morning. Let me get this resolved for you right away.
-
-I can see that your premium payment was processed successfully yesterday. This appears to be a synchronization delay between our payment and access systems. I'm manually refreshing your account permissions now, which should restore your premium features within the next 5 minutes.
-
-I'll send you a confirmation email once everything is active, and I'll also include a direct link to the analytics dashboard to save you time.
-
-If you don't see the changes within 5 minutes, please reply to this email and I'll escalate this immediately to ensure you're ready for tomorrow's presentation.
-
-Best regards,
-Support Team`,
-    reasoning:
-      "Acknowledges the urgency and emotional impact, provides immediate action, sets clear expectations, and offers escalation path. High empathy with solution focus.",
-  },
-  {
-    id: "proposal-2",
-    tone: "professional",
-    approach: "investigative",
-    confidence: 87,
-    estimatedReadTime: "45 sec",
-    responseText: `Dear Sarah,
-
-Thank you for contacting us regarding the premium feature access issue.
-
-I have reviewed your account and confirmed that your premium subscription payment was successfully processed on [date]. However, I notice there may be a synchronization delay affecting your feature access.
-
-To resolve this, I will:
-1. Manually sync your account permissions
-2. Verify all premium features are properly enabled
-3. Run a system check to prevent future occurrences
-
-This process typically takes 5-10 minutes. I will monitor your account during this time and send you a confirmation email once complete.
-
-Additionally, I'm documenting this issue to help our technical team improve the payment-to-access workflow.
-
-Please don't hesitate to reach out if you have any questions or if the issue persists.
-
-Sincerely,
-Customer Support`,
-    reasoning:
-      "Professional tone with systematic approach. Provides transparency about the process and shows proactive problem-solving for future prevention.",
-  },
-  {
-    id: "proposal-3",
-    tone: "friendly",
-    approach: "solution-focused",
-    confidence: 91,
-    estimatedReadTime: "25 sec",
-    responseText: `Hey Sarah!
-
-Thanks for reaching out - and congrats on upgrading to premium! 🎉
-
-I can see your payment went through perfectly, but it looks like there's just a small hiccup with getting your new features activated. This happens occasionally and is super easy to fix.
-
-I'm taking care of it right now and you should see all your premium features (including that analytics dashboard) pop up within the next few minutes. 
-
-I'll shoot you a quick email once everything's live so you know you're all set for tomorrow's presentation!
-
-Thanks for your patience!
-The Support Team`,
-    reasoning:
-      "Casual, friendly tone that celebrates the upgrade while minimizing the problem. Quick resolution with personal touch and acknowledgment of their timeline.",
-  },
-]
 
 const getStatusChip = (status: TicketStatus) => {
   switch (status) {
@@ -107,6 +24,8 @@ const getStatusChip = (status: TicketStatus) => {
       return <Chip label="Picked up by Agent" color="info" />
     case TicketStatus.AGENT_WAITING_FOR_HUMAN:
       return <Chip label="Waiting for Human" color="error" />
+    case TicketStatus.HUMAN_FEEDBACK_PROVIDED:
+      return <Chip label="Human Feedback Provided" color="success" />
     case TicketStatus.ANSWERED:
       return <Chip label="Answered" color="success" />
     default:
@@ -118,7 +37,7 @@ export default function TicketPage() {
   const params = useParams<{ id: string }>()
   const [ticket, setTicket] = useState<Ticket | null>(null)
   const [selectedProposal, setSelectedProposal] =
-    useState<AIResponseProposal | null>(null)
+    useState<number | null>(null)
   const [editedResponse, setEditedResponse] = useState("")
 
   useEffect(() => {
@@ -143,42 +62,40 @@ export default function TicketPage() {
     }
   }, [params.id])
 
-  const handleSelectProposal = (proposal: AIResponseProposal) => {
-    setSelectedProposal(proposal)
-    setEditedResponse(proposal.responseText)
+  const handleSelectProposal = (index: number) => {
+    setSelectedProposal(index)
+    setEditedResponse(ticket?.proposedAnswers[index] || "")
   }
 
-  const handleCopyResponse = (text: string) => {
-    navigator.clipboard.writeText(text)
-  }
+  const handleSendToAgent = async () => {
+    if (!ticket) return;
 
-  const getToneColor = (tone: string) => {
-    switch (tone) {
-      case "empathetic":
-        return "secondary"
-      case "professional":
-        return "primary"
-      case "friendly":
-        return "success"
-      case "direct":
-        return "warning"
-      default:
-        return "default"
-    }
-  }
+    try {
+      const response = await fetch(`/api/tickets/${params.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ finalAnswer: editedResponse, status: TicketStatus.HUMAN_FEEDBACK_PROVIDED }),
+      });
 
-  const getApproachColor = (approach: string) => {
-    switch (approach) {
-      case "solution-focused":
-        return "success"
-      case "investigative":
-        return "info"
-      case "escalation":
-        return "error"
-      case "educational":
-        return "primary"
-      default:
-        return "default"
+      if (!response.ok) {
+        console.error("Failed to update ticket");
+      } else {
+        const updatedTicket = await response.json();
+        setTicket(updatedTicket);
+
+        // Send the ticket to the agent again
+        fetch("/api/generate-answers", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ticketId: ticket.id }),
+        });
+      }
+    } catch (error) {
+      console.error("An error occurred while updating the ticket:", error);
     }
   }
 
@@ -217,81 +134,92 @@ export default function TicketPage() {
           <Typography variant="body1">{ticket.content}</Typography>
         </Box>
 
-        <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
-          Suggested Answers
-        </Typography>
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={2}
-          sx={{ mb: 4, alignItems: "stretch" }}
-        >
-          {aiProposals.slice(0, 3).map((proposal, index) => (
-            <Card
-              key={proposal.id}
-              onClick={() => handleSelectProposal(proposal)}
-              elevation={selectedProposal?.id === proposal.id ? 8 : 2}
-              sx={{
-                cursor: "pointer",
-                border: "2px solid",
-                borderColor:
-                  selectedProposal?.id === proposal.id
-                    ? "primary.main"
-                    : "transparent",
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                transition: 'all 0.2s',
-              }}
-            >
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Typography variant="h6">Answer {index + 1}</Typography>
-                <Stack direction="row" spacing={1} sx={{ my: 1 }}>
-                  <Chip
-                    label={proposal.tone}
-                    color={getToneColor(proposal.tone)}
-                    size="small"
-                  />
-                  <Chip
-                    label={proposal.approach}
-                    color={getApproachColor(proposal.approach)}
-                    size="small"
-                  />
-                </Stack>
-                <Typography variant="body2" color="text.secondary">
-                  Confidence: {proposal.confidence}%
-                </Typography>
-              </CardContent>
-            </Card>
-          ))}
-        </Stack>
-
-        {selectedProposal && (
-          <Box>
-            <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
-              Final Response
-            </Typography>
-            <TextField
-              multiline
-              fullWidth
-              rows={12}
-              value={editedResponse}
-              onChange={(e) => setEditedResponse(e.target.value)}
-              variant="outlined"
-              sx={{ mb: 2, bgcolor: "white" }}
-            />
-            <Stack direction="row" spacing={1} justifyContent="flex-end">
-              <Button
-                variant="outlined"
-                startIcon={<ContentCopy />}
-                onClick={() => handleCopyResponse(editedResponse)}
+        {ticket.status === TicketStatus.AGENT_WAITING_FOR_HUMAN && (
+          <>
+          <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+            Proposed Answers
+          </Typography>
+          <Stack
+            direction="column"
+            spacing={1}
+            sx={{ mb: 4 }}
+          >
+            {ticket.proposedAnswers.slice(0, 3).map((answer: string, index: number) => (
+              <Card
+                key={index}
+                onClick={() => handleSelectProposal(index)}
+                sx={{
+                  cursor: "pointer",
+                  border: "2px solid",
+                  borderColor:
+                    selectedProposal === index
+                      ? "primary.main"
+                      : "grey.200",
+                  p: 2,
+                  "&:hover": {
+                    borderColor: selectedProposal === index ? "primary.main" : "primary.light",
+                  },
+                  transition: 'all 0.2s',
+                }}
               >
-                Copy
-              </Button>
-              <Button variant="contained" color="primary" startIcon={<Send />}>
-                Send to agent
-              </Button>
-            </Stack>
-          </Box>
+                <Typography
+                  variant="body1"
+                  sx={
+                    selectedProposal === index
+                      ? { whiteSpace: "pre-wrap" }
+                      : {
+                          whiteSpace: "pre-wrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 4,
+                          WebkitBoxOrient: "vertical",
+                        }
+                  }
+                >
+                  {answer}
+                </Typography>
+              </Card>
+            ))}
+          </Stack>
+
+          {selectedProposal !== null && (
+            <Box>
+              <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+                Final Response
+              </Typography>
+              <TextField
+                multiline
+                fullWidth
+                rows={12}
+                value={editedResponse}
+                onChange={(e) => setEditedResponse(e.target.value)}
+                variant="outlined"
+                sx={{ mb: 2, bgcolor: "white" }}
+              />
+              <Stack direction="row" spacing={1} justifyContent="flex-end">
+                <Button variant="contained" color="primary" onClick={handleSendToAgent} startIcon={<Send />}>
+                  Send to agent
+                </Button>
+              </Stack>
+            </Box>
+          )}
+          </>
+        )}
+
+        {(ticket.status === TicketStatus.HUMAN_FEEDBACK_PROVIDED || ticket.status === TicketStatus.ANSWERED) && (
+            <>
+              <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+                Final Response
+              </Typography>
+              <Typography variant="body1">{ticket.finalAnswer}</Typography>
+            </>
+        )}
+
+        {(ticket.status === TicketStatus.ANSWERED) && (
+            <Alert severity="success" sx={{ mt: 2,mb: 2 }}>
+              The agent has successfully answered the user.
+            </Alert>
         )}
       </Container>
     </Box>
